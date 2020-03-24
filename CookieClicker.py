@@ -38,6 +38,7 @@ class Highest(Screen):
 
 '''
 
+
 # Create the screen manager
 # sm = ScreenManager()
 # sm.add_widget(Highest(name='Cookies'))
@@ -49,18 +50,24 @@ class MyGrid(GridLayout):
     def __init__(self, **kwargs):
         super(MyGrid, self).__init__(**kwargs)
         self.cols = 2
-
+        # Initialize count to 0
         count = 0
-        r1c2 = (str("Total Cookies: " + str(count)))
-
-        click = Button(text=r1c2, font_size=12)
-        click.bind(on_press=self.increment)
-        self.add_widget(click)
+        # Replace r1c2 with more descriptive identifier
+        # set value cookie amount to the count
+        cookie_amount = str("Total Cookies: " + str(count))
+        # create a Button using the cookie amount and a font size (I pick 48 because I'm old and my eyes can't see well)
+        # Change name of button from click to cookiebutton
+        self.cookiebutton = Button(text=cookie_amount, font_size=48)
+        # Bind something to take place when the button is pressed
+        self.cookiebutton.bind(on_press=self.increment)
+        # Add widget to screen so that button is displayed
+        self.add_widget(self.cookiebutton)
 
     def increment(self, instance):
         self.count = self.count + 1
+        self.cookiebutton.text = str("Total Cookies: " + str(self.count))
 
-        self.r1c2 = str("Total Cookies: " + str(self.count))
+        print(self.count)
 
 
 class MyApp(App):
