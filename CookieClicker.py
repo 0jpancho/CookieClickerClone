@@ -1,6 +1,7 @@
 #!/usr/bin/kivy
 import kivy
 from kivy.properties import StringProperty
+from kivy.uix.label import Label
 
 kivy.require('1.7.2')
 
@@ -20,9 +21,10 @@ Builder.load_string("""
         #     on_press: root.increment()
 """)
 
+
 class Highest(Screen):
     count = 0
-    r1c2 = StringProperty(str("Currency: "+ str(count)))
+    r1c2 = StringProperty(str("Currency: " + str(count)))
 
     def increment(self):
         self.count = self.count + 1
@@ -34,10 +36,13 @@ class Highest(Screen):
 sm = ScreenManager()
 sm.add_widget(Highest(name='Highest'))
 
-class TestApp(App):
+
+class MyApp(App):
 
     def build(self):
+        #return Label(text = "Jancho Test")
         return sm
 
+
 if __name__ == '__main__':
-    TestApp().run()
+    MyApp().run()
