@@ -1,5 +1,7 @@
 #!/usr/bin/kivy
 
+from enum import Enum
+
 import kivy
 from kivy.app import App
 from kivy.lang import Builder
@@ -10,33 +12,13 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 kivy.require('1.7.2')
-'''
-Builder.load_string("""
-<Highest>:
-    GridLayout:
-        cols: 1
-        Button:
-            text: root.r1c2
-            on_press: root.increment()
-        # Button:
-        #     text: root.r1c2
-        #     on_press: root.increment()
-""")
 
 
-
-class Highest(Screen):
-    count = 0
-    r1c2 = StringProperty(str("Total Cookies: " + str(count)))
-
-    def increment(self):
-        self.count = self.count + 1
-
-        self.r1c2 = str("Total Cookies: " + str(self.count))
-
-
-
-'''
+class ChangeOperators(Enum):
+    ADD = 0
+    SUBTRACT = 1
+    MULTIPLY = 2
+    DIVIDE = 3
 
 
 # Create the screen manager
@@ -52,14 +34,18 @@ class MyGrid(GridLayout):
         self.cols = 2
         # Initialize count to 0
         count = 0
+
         # Replace r1c2 with more descriptive identifier
         # set value cookie amount to the count
         cookie_amount = str("Total Cookies: " + str(count))
+
         # create a Button using the cookie amount and a font size (I pick 48 because I'm old and my eyes can't see well)
         # Change name of button from click to cookiebutton
         self.cookiebutton = Button(text=cookie_amount, font_size=48)
+
         # Bind something to take place when the button is pressed
         self.cookiebutton.bind(on_press=self.increment)
+
         # Add widget to screen so that button is displayed
         self.add_widget(self.cookiebutton)
 
@@ -67,7 +53,18 @@ class MyGrid(GridLayout):
         self.count = self.count + 1
         self.cookiebutton.text = str("Total Cookies: " + str(self.count))
 
-        print(self.count)
+    def changeTotal(self, changeOperator, value):
+        if changeOperator is ChangeOperators.ADD:
+            self.count = self.count + value
+
+        if changeOperator is ChangeOperators.SUBTRACT:
+            self.count = self.count - value
+
+        if changeOperator is ChangeOperators.MULTIPLY:
+            self.count = self.count * value
+
+        if changeOperator is ChangeOperators.DIVIDE:
+            self.count = self.count * value
 
 
 class MyApp(App):
