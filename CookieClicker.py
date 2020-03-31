@@ -5,11 +5,12 @@ from enum import Enum
 import kivy
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.widget import Widget
 
 kivy.require('1.7.2')
 
@@ -22,57 +23,75 @@ class ChangeOperators(Enum):
 
 
 # Create the screen manager
-# sm = ScreenManager()
-# sm.add_widget(Highest(name='Cookies'))
+formatting = """
+<MyScreenManager>:
+    GameScreen:
+<GameScreen>:
+    name: 'game'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            id: display
+            text: root.display
+        BoxLayout:
+            Button:
+                text: 'Click for Cookies'
+                on_press: root.addCookies()
+"""
+Builder.load_string(formatting)
 
 
-class MyGrid(GridLayout):
-    count = 0
+class PlayerData:
 
-    def __init__(self, **kwargs):
-        super(MyGrid, self).__init__(**kwargs)
-        self.cols = 2
-        # Initialize count to 0
-        count = 0
+    def __init__(self, cookies):
+        self.cookies = cookies
+        self.name: str = ""
+        self.attributeDict = {"COOKIES": self.cookies}
 
-        # Replace r1c2 with more descriptive identifier
-        # set value cookie amount to the count
-        cookie_amount = str("Total Cookies: " + str(count))
+    def importSaveData(self):
+        pass
 
-        # create a Button using the cookie amount and a font size (I pick 48 because I'm old and my eyes can't see well)
-        # Change name of button from click to cookiebutton
-        self.cookiebutton = Button(text=cookie_amount, font_size=48)
+    def setName(self, name=""):
+        pass
 
-        # Bind something to take place when the button is pressed
-        self.cookiebutton.bind(on_press=self.increment)
+    def addCookies(self, amount=1):
+        self.cookies = self.cookies + amount
 
-        # Add widget to screen so that button is displayed
-        self.add_widget(self.cookiebutton)
+    def __str__(self):
+        return str(
+            "\n" + "Cookies: " + str(self.cookies)
+        )
 
-    def increment(self, instance):
-        self.count = self.count + 1
-        self.cookiebutton.text = str("Total Cookies: " + str(self.count))
 
-    def changeTotal(self, changeOperator, value):
-        if changeOperator is ChangeOperators.ADD:
-            self.count = self.count + value
+class MyScreenManager(ScreenManager, Widget):
+    data = ObjectProperty(PlayerData)
 
-        if changeOperator is ChangeOperators.SUBTRACT:
-            self.count = self.count - value
 
-        if changeOperator is ChangeOperators.MULTIPLY:
-            self.count = self.count * value
+class GameScreen(Screen):
+    data_stats: PlayerData = ObjectProperty(PlayerData)
 
-        if changeOperator is ChangeOperators.DIVIDE:
-            self.count = self.count * value
+    def loadData(self):
+
+        self.data_stats = PlayerData()
+        self.manager.get_screen('game').display = str(self.data_stats)
+
+    def get_data(self) -> PlayerData:
+        return self.manager.get_screen('game').data_stats
+
+    display = StringProperty("IF THIS IS SHOWING SOMETHING WENT WRONG")
+
+    def addCookies(self):
+        stats: PlayerData = self.get_data()
+        stats.addCookies(1)
+        self.display = str(stats)
 
 
 class MyApp(App):
 
     def build(self):
-        # return Label(text = "Jancho Test")
-        return MyGrid()
+        return MyScreenManager()
 
 
+# Run the app
 if __name__ == '__main__':
     MyApp().run()
