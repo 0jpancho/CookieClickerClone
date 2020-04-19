@@ -28,12 +28,11 @@ formatting = """
         orientation: 'vertical'
         
         Label:
-            color: [0, 0, 0, 1]
             text: root.instructions
             font_size: 20
             
         TextInput:
-            ID: save_code
+            id: save_code
             font_size: 20
             
         Button:
@@ -41,6 +40,20 @@ formatting = """
             on_press: root.load_or_start_new(save_code.text)
             
 <LoadSaveScreen>:
+    name: 'load'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            id: instr
+            size: self.texture_size
+            text: root.defaultText
+        TextInput:
+            id: name
+            font_size: 20
+        Button:
+            text: 'Enter a name for yourself'
+            on_press: root.createSaveData
+            
 <GameScreen>:
     name: 'game'
     BoxLayout:
@@ -66,14 +79,11 @@ class PlayerData:
     def create_from_save(self):
         pass
 
-    def set_name(self, username):
-        self.name = username
-
     def importSaveData(self):
         pass
 
     def setName(self, name=""):
-        pass
+        self.name = name
 
     def incrementCookies(self, amount=1):
         self.cookies = self.cookies + amount
@@ -99,18 +109,18 @@ class WelcomeScreen(Screen):
     def load_or_start_new(self, savedata=''):
         # For now we always start a new game
         if savedata != '':
-            self.load_game(savedata)
+            self.loadSave(savedata)
         else:
-            self.start_new_game()
+            self.createNewSave()
         pass
 
     # Right now load and new do the same thing, but that might change in the future
-    def load_game(self, data):
-        self.manager.current = 'character'
+    def loadSave(self, data):
+        self.manager.current = 'load'
         pass
 
-    def start_new_game(self):
-        self.manager.current = 'character'
+    def createNewSave(self):
+        self.manager.current = 'load'
         pass
 
     pass
@@ -131,15 +141,18 @@ class LoadSaveScreen(Screen):
         if username != '':
             self.data_stats = PlayerData()
             self.data_stats.setName(username)
+            self.manager.get_screen('game').display = str(self.data_stats)
+            self.manager.current = 'game'
+        else:
+            self.defaultText = self.failText
+        pass
+    pass
 
 
 class GameScreen(Screen):
 
     def get_data(self) -> PlayerData:
-
-        self.manager.get_screen('game').display = str(self.data_stats)
-        self.manager.current = 'game'
-        return self.manager.get_screen('game').data_stats
+        return self.manager.get_screen('load').data_stats
 
     display = StringProperty("IF THIS IS SHOWING SOMETHING WENT WRONG")
 
