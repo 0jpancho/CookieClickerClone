@@ -52,7 +52,7 @@ formatting = """
             font_size: 20
         Button:
             text: 'Enter a name for yourself'
-            on_press: root.createSaveData
+            on_press: root.createSaveData(name.text)
             
 <GameScreen>:
     name: 'game'
@@ -62,9 +62,18 @@ formatting = """
             id: display
             text: root.display
         BoxLayout:
+            orientation: 'horizontal'
             Button:
                 text: 'Click for Cookies'
                 on_press: root.addCookies(1)
+            Button:
+                text:
+            Button:
+                text:
+            Button:
+                text:
+            Button:
+                text:
 """
 Builder.load_string(formatting)
 
@@ -91,7 +100,7 @@ class PlayerData:
 
     def __str__(self):
         return str(
-            "\n" + "Cookies: " + str(self.cookies)
+            self.name + " | " + "Cookies: " + str(self.cookies)
         )
 
 
@@ -132,7 +141,7 @@ class LoadSaveScreen(Screen):
     '''))
 
     failText = StringProperty(str('''
-    Give yourself a name to continue to play
+    ERROR: Give yourself a name to continue to play
     '''))
 
     data_stats: PlayerData = ObjectProperty(PlayerData)
@@ -146,6 +155,7 @@ class LoadSaveScreen(Screen):
         else:
             self.defaultText = self.failText
         pass
+
     pass
 
 
