@@ -67,23 +67,29 @@ formatting = """
                 text: 'Click for Cookies'
                 on_press: root.addCookies(1)
             Button:
-                text:
+                text: 'Additional Pointer'
+                on_press: root.addPointers(1) 
             Button:
-                text:
+                text: 'Flat Multiplier Increase'
+                on_press: root.changeMultiplier(1)
             Button:
-                text:
+                text: 'Auto Generator'
             Button:
-                text:
+                text: 'Save + Exit'
 """
 Builder.load_string(formatting)
 
 
 class PlayerData:
 
-    def __init__(self, cookies=0, tier=1):
+    def __init__(self, cookies=0, pointers=1, multiplier=1, tier=1):
         self.cookies: int = cookies
+        self.pointers: int = pointers
+        self.multiplier: int = multiplier
         self.name: str = ""
         self.tier = tier
+
+        self.multiplierTracker = 1
 
     def create_from_save(self):
         pass
@@ -94,13 +100,26 @@ class PlayerData:
     def setName(self, name=""):
         self.name = name
 
-    def incrementCookies(self, amount=1):
-        self.cookies = self.cookies + amount
+    def incrementCookies(self, inputVal=1, normalIncrement=False, addPointers=False, changeMultiplier=False):
+        if addPointers:
+            self.pointers = self.pointers + 1
+
+        if changeMultiplier:
+            self.multiplierTracker = self.multiplierTracker + 1
+            self.multiplier = self.multiplier + (0.2 * self.multiplierTracker)
+
+        if normalIncrement:
+            self.cookies = self.cookies + ((inputVal * self.pointers) * self.multiplier)
         pass
+
+    def incrementPointers(self):
+        self.pointers = + 1
 
     def __str__(self):
         return str(
-            self.name + " | " + "Cookies: " + str(self.cookies)
+            self.name + " | " + "Cookies: " + str(self.cookies) + "\n" +
+            "# of Pointers: " + str(self.pointers) + "\n" +
+            "Multiplier: " + str("{:.2f}".format(self.multiplier))
         )
 
 
@@ -168,11 +187,23 @@ class GameScreen(Screen):
 
     def addCookies(self, amount):
         stats: PlayerData = self.get_data()
-        stats.incrementCookies(amount)
+        stats.incrementCookies(amount, True, False, False)
+        self.display = str(stats)
+
+    def addPointers(self, amount):
+        stats: PlayerData = self.get_data()
+        stats.incrementCookies(amount, False, True, False)
+        self.display = str(stats)
+
+    def changeMultiplier(self, amount):
+        stats: PlayerData = self.get_data()
+        print("Prev Mult" + str(stats.multiplier))
+        stats.incrementCookies(amount, False, False, True)
+        print("Prev Mult" + str(stats.multiplier))
         self.display = str(stats)
 
 
-class MyApp(App):
+class CloneApp(App):
 
     def build(self):
         return MyScreenManager()
@@ -180,4 +211,4 @@ class MyApp(App):
 
 # Run the app
 if __name__ == '__main__':
-    MyApp().run()
+    CloneApp().run()
