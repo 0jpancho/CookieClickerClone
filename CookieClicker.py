@@ -66,58 +66,107 @@ formatting = """
             Button:
                 text: 'Click for Cookies'
                 on_press: root.addCookies(1)
-            Button:
-                text: 'Additional Pointer'
-                on_press: root.addPointers(1) 
-            Button:
-                text: 'Flat Multiplier Increase'
-                on_press: root.changeMultiplier(1)
-            Button:
-                text: 'Auto Generator'
-            Button:
-                text: 'Save + Exit'
+            BoxLayout:
+                orientation: 'vertical'
+                Label: 
+                    text: 'Buy a Pointer'
+                Button:
+                    
+                    on_press: root.addPointers(1)
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    text: 'Increase the Base Multiplier'
+                Button:
+                    on_press: root.changeMultiplier(1)
+            BoxLayout:
+                orientation: 'vertical'
+                Label: 
+                    text: 'Auto Generator WIP'
+                Button:
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    text: 'Save + Exit'                 
+                Button:
 """
 Builder.load_string(formatting)
 
 
 class PlayerData:
 
-    def __init__(self, cookies=0, pointers=1, multiplier=1, tier=1):
+    # Init normal values, as well as tracker variables for those values
+    def __init__(self, cookies=0, pointers=1, pointerCost = 0,  multiplier=1, multiplierTracker = 0, tier=1):
         self.cookies: int = cookies
         self.pointers: int = pointers
         self.multiplier: int = multiplier
+
         self.name: str = ""
+
+        # Unused
         self.tier = tier
 
-        self.multiplierTracker = 1
+        # Current issue: Attempting for button to update the new pointer cost on every press
+        self.pointerCost: int = pointerCost
+        self.pointerCost = pointers * 100
 
+        self.multiplierTracker: int = multiplierTracker
+
+    # Unused
     def create_from_save(self):
         pass
 
+    # Unused
     def importSaveData(self):
         pass
 
+    # Set name value
     def setName(self, name=""):
         self.name = name
 
+    # Main function for cookie addition. Booleans change purpose for function call
+    # normalIncrement modifies self.cookies directly
+    # addPointers increments the # of pointers + increases the cost per purchase
+    # changeMultiplier adds an exponentially increasing base multiplier to (inputVal * pointers).
+    # inputVal is static w/ value of 1
     def incrementCookies(self, inputVal=1, normalIncrement=False, addPointers=False, changeMultiplier=False):
+
         if addPointers:
-            self.pointers = self.pointers + 1
+
+            # Init tracker variable and set cost of next pointer
+            cookieTracker = self.cookies
+            pointerCost = 100 * self.pointers
+
+            # Calculate the theoretical new cost
+            costDifference = cookieTracker - pointerCost
+
+            # Set the current value of cookies to the cost difference if it is positive
+            if costDifference >= 0:
+                self.cookies = costDifference
+                self.pointers = self.pointers + 1
+                # self.pointerTracker = self.pointerTracker + 1
+            # Ignore if cost difference is negative: can't have negative cookies
+            else:
+                pass
 
         if changeMultiplier:
+            # Increment the multiplier tracker by 1. Scale the changeMultiplier to increase with its tracker
             self.multiplierTracker = self.multiplierTracker + 1
+            # Arbitrary multiplier of 0.2 added to itself. To be editedl ater
             self.multiplier = self.multiplier + (0.2 * self.multiplierTracker)
 
+        # Calculate a new value of cookies with current values
         if normalIncrement:
             self.cookies = self.cookies + ((inputVal * self.pointers) * self.multiplier)
         pass
 
-    def incrementPointers(self):
-        self.pointers = + 1
+    def getPointerCost(self):
+        self.pointerCost = self.pointers * 100
+        return str(self.pointerCost)
 
     def __str__(self):
         return str(
-            self.name + " | " + "Cookies: " + str(self.cookies) + "\n" +
+            self.name + " | " + "Cookies: " + str("{:.2f}").format(self.cookies) + "\n" +
             "# of Pointers: " + str(self.pointers) + "\n" +
             "Multiplier: " + str("{:.2f}".format(self.multiplier))
         )
@@ -134,6 +183,7 @@ class WelcomeScreen(Screen):
     If you wish to load a save, type your save code and continue
     '''))
 
+    # Unfinished: Later issue
     def load_or_start_new(self, savedata=''):
         # For now we always start a new game
         if savedata != '':
@@ -156,21 +206,23 @@ class WelcomeScreen(Screen):
 
 class LoadSaveScreen(Screen):
     defaultText = StringProperty(str('''
-    Type in a name or nickname for yourself
+    Type in a name for yourself
     '''))
 
     failText = StringProperty(str('''
-    ERROR: Give yourself a name to continue to play
+    Give yourself a name to continue to play you absolute dingus
     '''))
 
     data_stats: PlayerData = ObjectProperty(PlayerData)
 
+    # Create a new save data if text field isn't blank
     def createSaveData(self, username):
         if username != '':
             self.data_stats = PlayerData()
             self.data_stats.setName(username)
             self.manager.get_screen('game').display = str(self.data_stats)
             self.manager.current = 'game'
+        # Display failText until textbox is no longer empty
         else:
             self.defaultText = self.failText
         pass
@@ -194,6 +246,11 @@ class GameScreen(Screen):
         stats: PlayerData = self.get_data()
         stats.incrementCookies(amount, False, True, False)
         self.display = str(stats)
+
+    # WIP Urgent
+    def getPointerCost(self):
+        stats: PlayerData = self.get_data()
+        return stats.pointerCost
 
     def changeMultiplier(self, amount):
         stats: PlayerData = self.get_data()
