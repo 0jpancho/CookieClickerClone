@@ -4,6 +4,7 @@ from enum import Enum
 
 import kivy
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.button import Button
@@ -13,7 +14,6 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.widget import Widget
 
 kivy.require('1.7.2')
-
 # Create the screen manager
 formatting = """
 <MyScreenManager>:
@@ -71,19 +71,22 @@ formatting = """
                 Label: 
                     text: 'Buy a Pointer'
                 Button:
-                    
+                    text: root.pointerCostText
                     on_press: root.addPointers(1)
             BoxLayout:
                 orientation: 'vertical'
                 Label:
                     text: 'Increase the Base Multiplier'
                 Button:
+                    text: root.multiplierCostText
                     on_press: root.changeMultiplier(1)
             BoxLayout:
                 orientation: 'vertical'
                 Label: 
-                    text: 'Auto Generator WIP'
+                    text: 'Auto Clicker +1'
                 Button:
+                    text: root.autoClickerCostText
+                    on_press: root.addAutoClicker()
             BoxLayout:
                 orientation: 'vertical'
                 Label:
@@ -96,23 +99,42 @@ Builder.load_string(formatting)
 class PlayerData:
 
     # Init normal values, as well as tracker variables for those values
-    def __init__(self, cookies=0, pointers=1, pointerCost = 0,  multiplier=1, multiplierTracker = 0, tier=1):
+    def __init__(self, cookies=0, pointers=1, multiplier=1, multiplierTracker=0, autoAddValue=0):
         self.cookies: int = cookies
         self.pointers: int = pointers
         self.multiplier: int = multiplier
 
         self.name: str = ""
 
-        # Unused
-        self.tier = tier
-
-        # Current issue: Attempting for button to update the new pointer cost on every press
-        self.pointerCost: int = pointerCost
-        self.pointerCost = pointers * 100
+        self.pointerCost: int = self.pointers * 20
 
         self.multiplierTracker: int = multiplierTracker
+        self.multiplierCost: int = multiplierTracker * 100
 
-    # Unused
+        self.autoAddValue: int = autoAddValue
+
+        Clock.schedule_interval(self.incrementCookies(self.autoAddValue, True, False, False, False), 0.5)
+
+    # Calculate new pointer cost
+    def getNewPointerCost(self):
+        self.pointerCost = self.pointers ** 3
+        return self.pointerCost
+
+    # Calculate new multiplier cost
+    def getNewMultiplierCost(self):
+        self.multiplierCost = (self.multiplierTracker ** 6) - self.multiplierTracker ** 5
+        return self.multiplierCost
+
+    # Increment autoAdd val by 1
+    def incrementAutoVal(self):
+        self.autoAddValue = self.autoAddValue + 1
+        return self.autoAddValue
+
+    # Calculate new auto clicker cost
+    def getNewAutoValCost(self):
+        self.autoAddValue = self.autoAddValue + 200
+        return self.autoAddValue
+
     def create_from_save(self):
         pass
 
@@ -129,46 +151,62 @@ class PlayerData:
     # addPointers increments the # of pointers + increases the cost per purchase
     # changeMultiplier adds an exponentially increasing base multiplier to (inputVal * pointers).
     # inputVal is static w/ value of 1
-    def incrementCookies(self, inputVal=1, normalIncrement=False, addPointers=False, changeMultiplier=False):
+    def incrementCookies(self, inputVal=1, incrementByOne=False, incrementWithLogic=False, addPointers=False,
+                         changeMultiplier=False):
 
         if addPointers:
 
             # Init tracker variable and set cost of next pointer
             cookieTracker = self.cookies
-            pointerCost = 100 * self.pointers
 
             # Calculate the theoretical new cost
-            costDifference = cookieTracker - pointerCost
+            costDifference = cookieTracker - self.getNewPointerCost()
 
             # Set the current value of cookies to the cost difference if it is positive
             if costDifference >= 0:
                 self.cookies = costDifference
                 self.pointers = self.pointers + 1
-                # self.pointerTracker = self.pointerTracker + 1
-            # Ignore if cost difference is negative: can't have negative cookies
+                # Ignore if cost difference is negative: can't have negative cookies
             else:
                 pass
 
         if changeMultiplier:
-            # Increment the multiplier tracker by 1. Scale the changeMultiplier to increase with its tracker
-            self.multiplierTracker = self.multiplierTracker + 1
-            # Arbitrary multiplier of 0.2 added to itself. To be editedl ater
-            self.multiplier = self.multiplier + (0.2 * self.multiplierTracker)
 
-        # Calculate a new value of cookies with current values
-        if normalIncrement:
-            self.cookies = self.cookies + ((inputVal * self.pointers) * self.multiplier)
+            # Init a temp tracking variables
+            cookieTracker = self.cookies
+
+            costDifference = cookieTracker - self.getNewMultiplierCost()
+
+            # Set the current value of cookies to the cost difference if it is positive
+            if costDifference >= 0:
+                self.cookies = costDifference
+
+                # Increment the multiplier tracker by 1
+                self.multiplierTracker = self.multiplierTracker + 1
+
+                # Arbitrary multiplier of 0.2 added to itself. To be edited later
+                self.multiplier = self.multiplier + (0.5 * self.multiplierTracker)
+
+            # Ignore if cost difference is negative: can't have negative cookies
+            else:
+                pass
+
+        # Adds the input value of the function to the current # of cookies
+        if incrementByOne:
+            self.cookies = self.cookies + inputVal
         pass
 
-    def getPointerCost(self):
-        self.pointerCost = self.pointers * 100
-        return str(self.pointerCost)
+        # Calculate a new value of cookies with logic added
+        if incrementWithLogic:
+            self.cookies = self.cookies + ((inputVal * self.pointers) * self.multiplier)
+        pass
 
     def __str__(self):
         return str(
             self.name + " | " + "Cookies: " + str("{:.2f}").format(self.cookies) + "\n" +
             "# of Pointers: " + str(self.pointers) + "\n" +
-            "Multiplier: " + str("{:.2f}".format(self.multiplier))
+            "Multiplier: " + str("{:.2f}".format(self.multiplier)) + "\n" +
+            "Auto Clicker Value" + str(self.autoAddValue)
         )
 
 
@@ -235,29 +273,33 @@ class GameScreen(Screen):
     def get_data(self) -> PlayerData:
         return self.manager.get_screen('load').data_stats
 
-    display = StringProperty("IF THIS IS SHOWING SOMETHING WENT WRONG")
+    display = StringProperty("Blank is Bad")
+    pointerCostText = StringProperty("Blank is Bad")
+    multiplierCostText = StringProperty("Blank is Bad")
+    autoClickerCostText = StringProperty("Blank is Bad")
 
     def addCookies(self, amount):
         stats: PlayerData = self.get_data()
-        stats.incrementCookies(amount, True, False, False)
+        stats.incrementCookies(amount, False, True, False, False)
         self.display = str(stats)
 
     def addPointers(self, amount):
         stats: PlayerData = self.get_data()
-        stats.incrementCookies(amount, False, True, False)
+        stats.incrementCookies(amount, False, False, True, False)
         self.display = str(stats)
-
-    # WIP Urgent
-    def getPointerCost(self):
-        stats: PlayerData = self.get_data()
-        return stats.pointerCost
+        self.pointerCostText = str(stats.getNewPointerCost())
 
     def changeMultiplier(self, amount):
         stats: PlayerData = self.get_data()
-        print("Prev Mult" + str(stats.multiplier))
-        stats.incrementCookies(amount, False, False, True)
-        print("Prev Mult" + str(stats.multiplier))
+        stats.incrementCookies(amount, False, False, False, True)
         self.display = str(stats)
+        self.multiplierCostText = str(stats.getNewMultiplierCost())
+
+    def addAutoClicker(self):
+        stats: PlayerData = self.get_data()
+        stats.incrementAutoVal()
+        self.display = str(stats)
+        self.autoClickerCostText = str(stats.getNewAutoValCost())
 
 
 class CloneApp(App):
