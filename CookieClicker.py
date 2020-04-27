@@ -113,7 +113,7 @@ class PlayerData:
 
         self.autoAddValue: int = autoAddValue
 
-        Clock.schedule_interval(self.incrementCookies(self.autoAddValue, True, False, False, False), 0.5)
+        Clock.schedule_interval(self.incrementCookies(self.getAutoAddVal(), True, False, False, False), 0.5)
 
     # Calculate new pointer cost
     def getNewPointerCost(self):
@@ -133,6 +133,9 @@ class PlayerData:
     # Calculate new auto clicker cost
     def getNewAutoValCost(self):
         self.autoAddValue = self.autoAddValue + 200
+        return self.autoAddValue
+
+    def getAutoAddVal(self):
         return self.autoAddValue
 
     def create_from_save(self):
@@ -191,15 +194,13 @@ class PlayerData:
             else:
                 pass
 
-        # Adds the input value of the function to the current # of cookies
-        if incrementByOne:
-            self.cookies = self.cookies + inputVal
-        pass
-
         # Calculate a new value of cookies with logic added
         if incrementWithLogic:
             self.cookies = self.cookies + ((inputVal * self.pointers) * self.multiplier)
         pass
+
+        if incrementByOne:
+            self.cookies = self.cookies + inputVal
 
     def __str__(self):
         return str(
